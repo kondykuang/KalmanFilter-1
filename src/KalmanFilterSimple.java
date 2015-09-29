@@ -13,14 +13,15 @@ import org.ejml.simple.SimpleMatrix;
 public class KalmanFilterSimple implements KalmanFilter{
  
     // kinematics description
-    private SimpleMatrix F,Q,H;
+    private SimpleMatrix F, G, Q, H;
  
     // sytem state estimate
-    private SimpleMatrix x,P;
+    private SimpleMatrix x, P;
  
     @Override
-    public void configure(DenseMatrix64F F, DenseMatrix64F Q, DenseMatrix64F H) {
+    public void configure(DenseMatrix64F F,  DenseMatrix64F G, DenseMatrix64F Q, DenseMatrix64F H) {
         this.F = new SimpleMatrix(F); // F = State transition matrix
+        this.G = new SimpleMatrix(G); // G = State control matrix
         this.Q = new SimpleMatrix(Q); // Q = Estimated proccess error covariance.
                                       // If you create the proccess (our case) and map
                                       // the equations directly from it, you can assume it as 0.
@@ -35,9 +36,11 @@ public class KalmanFilterSimple implements KalmanFilter{
     }
  
     @Override
-    public void predict() {
-        // x = F x
-        x = F.mult(x);
+    public void predict(DenseMatrix64F _u) {
+        SimpleMatrix u = SimpleMatrix.wrap(_u);
+        
+    	// x = F x  +  G u
+        x = (F.mult(x)).plus(G.mult(u));
  
         // P = F P F' + Q
         P = F.mult(P).mult(F.transpose()).plus(Q);
